@@ -8,6 +8,7 @@ pub const MAX_ROOM_MONSTERS: i32 = 3;
 pub const PLAYER_INDEX: usize = 0;
 pub mod utilities;
 pub mod map;
+pub mod actions;
 
 pub struct Game {
     pub map: map::Map,

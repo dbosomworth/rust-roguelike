@@ -2,6 +2,7 @@ use tcod::colors::Color;
 use tcod::console::{Console, BackgroundFlag};
 
 use crate::game::Game;
+use crate::game::PLAYER_INDEX;
 use crate::game::colors::*;
 use crate::game::MAX_ROOM_MONSTERS;
 use crate::game::map::Rect;
@@ -40,6 +41,23 @@ impl Object {
         if !is_location_blocked(x + dx, y + dy, &game.map, objects){
             objects[id].set_pos(x + dx, y + dy);
         }
+    }
+
+    pub fn player_move_or_attack(dx: i32, dy: i32, game: &Game, objects: &mut [Object]){
+        let x = objects[PLAYER_INDEX].x + dx;
+        let y = objects[PLAYER_INDEX].y + dy;
+
+        let target_id = objects.iter().position(|object| object.pos() == (x, y));
+
+        match target_id {
+            Some(target_id) => {
+                println!("The {} laughs at your puny efforts to attack him!", objects[target_id].name);
+            }
+            None => {
+                Object::move_by(PLAYER_INDEX, dx, dy, &game, objects);
+            }
+        }
+
     }
 
     //draw the object to the Console

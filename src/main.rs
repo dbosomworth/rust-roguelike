@@ -11,10 +11,11 @@ use game::PLAYER_INDEX;
 use game::object::Object as Object;
 use game::colors::*;
 use game::fov::*;
+use game::actions::PlayerAction;
 
 const SCREEN_WIDTH: i32 = 80;
 const SCREEN_HEIGHT: i32 = 50;
-const LIMIT_FPS: i32 = 20;
+const LIMIT_FPS: i32 = 30;
 
 const FONT_PNG: &str = "arial10x10.png";
 
@@ -77,25 +78,40 @@ fn toggle_fullscreen(tcod: &mut Tcod){
 
 //Handle key presses
 // &mut is effectively borrowing
-fn handle_keys(mut tcod: &mut Tcod, game: &Game, objects: &mut [Object]) -> bool {
+fn handle_keys(mut tcod: &mut Tcod, game: &Game, objects: &mut [Object]) -> PlayerAction {
     use tcod::input::Key;
     use tcod::input::KeyCode::*;
     
     let key = tcod.root.wait_for_keypress(true);
+    let player_alive = objects[PLAYER_INDEX].alive;
 
-    match key {
+    match ( key, key.text(), player_alive) {
         //.. means ignore other fields in the struct
-        Key { code: Enter, alt: true, .. } => toggle_fullscreen(&mut tcod),        
-        Key { code: Escape, ..} => return true,
-        Key { code: Up, .. } => Object::move_by(PLAYER_INDEX, 0, -1, game, objects),
-        Key { code: Down, .. } =>  Object::move_by(PLAYER_INDEX, 0, 1, game, objects),
-        Key { code: Left, .. } =>  Object::move_by(PLAYER_INDEX, -1, 0, game, objects),
-        Key { code: Right, .. } =>  Object::move_by(PLAYER_INDEX, 1, 0, game, objects),
-
-        _ => {}
+        (Key { code: Enter, alt: true, .. }, _, _,) => { 
+            toggle_fullscreen(&mut tcod);
+            return PlayerAction::DidntTakeTurn;
+        },        
+        (Key { code: Escape, ..}, _, _, ) => return PlayerAction::Exit,
+        (Key { code: Up, .. }, _, true, ) => {
+            Object::player_move_or_attack(0, -1, game, objects);
+            return PlayerAction::TookTurn;
+        },
+        (Key { code: Down, .. }, _, true, ) => { 
+            Object::player_move_or_attack(0, 1, game, objects);
+            return PlayerAction::TookTurn;
+        },
+        (Key { code: Left, .. }, _, true, ) => { 
+            Object::player_move_or_attack(-1, 0, game, objects);
+            return PlayerAction::TookTurn;
+        },
+        (Key { code: Right, .. }, _, true, )=> { 
+            Object::player_move_or_attack(1, 0, game, objects);
+            return PlayerAction::TookTurn;
+        }
+        _ => { return PlayerAction::DidntTakeTurn;}
     }
 
-    return false;
+    return PlayerAction::DidntTakeTurn;
 }
 
 //Main function
@@ -156,9 +172,19 @@ fn main() {
         previous_player_position = (player.x, player.y);
 
         //get the next keyboard input
-        let exit = handle_keys(&mut tcod, &game, &mut objects);
+        let player_action = handle_keys(&mut tcod, &game, &mut objects);
 
-        if exit {
+        //let other objects update
+        if objects[PLAYER_INDEX].alive && player_action != PlayerAction::DidntTakeTurn {
+            for object in &objects{
+                if (object as *const _) != (&objects[PLAYER_INDEX] as *const _){
+                    println!("The {} growls!", object.name);
+                }
+            }
+        }
+
+
+        if player_action == PlayerAction::Exit {
             break;
         }
     }
