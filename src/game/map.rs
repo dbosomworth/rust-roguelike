@@ -3,19 +3,20 @@ use crate::game::MAP_WIDTH;
 use crate::game::ROOM_MAX_SIZE;
 use crate::game::ROOM_MIN_SIZE;
 use crate::game::MAX_ROOMS;
+use crate::game::PLAYER_INDEX;
 use crate::game::tile::Tile as Tile;    
-use crate::game::object::Object as Object;
+use crate::game::object::{Object as Object, place_objects};
 
 use rand::Rng;
 
 pub type Map = Vec<Vec<Tile>>;
 
 #[derive(Clone, Copy, Debug)]
-struct Rect {
-    x1: i32,
-    y1: i32,
-    x2: i32,
-    y2: i32
+pub struct Rect {
+   pub x1: i32,
+   pub y1: i32,
+   pub x2: i32,
+   pub y2: i32
 }
 
 impl Rect {
@@ -69,7 +70,7 @@ fn create_v_tunnel(y1: i32, y2: i32, x: i32, map: &mut Map){
     }
 }
 //generate map
-pub fn make_map(player: &mut Object) -> Map {
+pub fn make_map(objects: &mut Vec<Object>) -> Map {
     let mut map = vec![vec![Tile::wall(); MAP_HEIGHT as usize]; MAP_WIDTH as usize];
 
     let mut rooms = vec![];
@@ -92,10 +93,10 @@ pub fn make_map(player: &mut Object) -> Map {
         if !failed {
             
             create_room(new_room, &mut map);
-            
+            place_objects(new_room, &map, objects);
+
             if rooms.is_empty() {
-                player.x = new_x;
-                player.y = new_y;
+                objects[PLAYER_INDEX].set_pos(new_x, new_y);
             } else {
 
                 let (prev_x, prev_y) = rooms[rooms.len() - 1].center();

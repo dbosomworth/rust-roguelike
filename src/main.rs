@@ -7,6 +7,7 @@ mod game;
 use game::Game as Game;
 use game::MAP_HEIGHT;
 use game::MAP_WIDTH;
+use game::PLAYER_INDEX;
 use game::object::Object as Object;
 use game::colors::*;
 use game::fov::*;
@@ -27,10 +28,8 @@ struct Tcod {
 //Render function
 fn render_all(tcod: &mut Tcod, game: &mut Game, objects: &[Object], fov_recompute: bool){
     
-
-
     if fov_recompute {
-        let player = &objects[0];
+        let player = &objects[PLAYER_INDEX];
         tcod.fov.compute_fov(player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGORITHM);
     }
 
@@ -66,7 +65,6 @@ fn render_all(tcod: &mut Tcod, game: &mut Game, objects: &[Object], fov_recomput
         }
     }
 
-
     //blit the offscreen render to the root
     blit(&tcod.con, (0,0), (MAP_WIDTH, MAP_HEIGHT), &mut tcod.root, (0,0), 1.0, 1.0);
 }
@@ -79,7 +77,7 @@ fn toggle_fullscreen(tcod: &mut Tcod){
 
 //Handle key presses
 // &mut is effectively borrowing
-fn handle_keys(mut tcod: &mut Tcod, game: &Game, player: &mut Object) -> bool {
+fn handle_keys(mut tcod: &mut Tcod, game: &Game, objects: &mut [Object]) -> bool {
     use tcod::input::Key;
     use tcod::input::KeyCode::*;
     
@@ -89,10 +87,10 @@ fn handle_keys(mut tcod: &mut Tcod, game: &Game, player: &mut Object) -> bool {
         //.. means ignore other fields in the struct
         Key { code: Enter, alt: true, .. } => toggle_fullscreen(&mut tcod),        
         Key { code: Escape, ..} => return true,
-        Key { code: Up, .. } => player.move_by(0, -1, game),
-        Key { code: Down, .. } =>  player.move_by(0, 1, game),
-        Key { code: Left, .. } =>  player.move_by(-1, 0, game),
-        Key { code: Right, .. } =>  player.move_by(1, 0, game),
+        Key { code: Up, .. } => Object::move_by(PLAYER_INDEX, 0, -1, game, objects),
+        Key { code: Down, .. } =>  Object::move_by(PLAYER_INDEX, 0, 1, game, objects),
+        Key { code: Left, .. } =>  Object::move_by(PLAYER_INDEX, -1, 0, game, objects),
+        Key { code: Right, .. } =>  Object::move_by(PLAYER_INDEX, 1, 0, game, objects),
 
         _ => {}
     }
@@ -123,17 +121,15 @@ fn main() {
     tcod::system::set_fps(LIMIT_FPS);
 
     //create the player Object
-    let player = Object::new(25, 23, '@', COLOR_WHITE);
-
-    //create an NPC Object
-    let npc = Object::new(SCREEN_WIDTH /2 - 5, SCREEN_HEIGHT /2, '@', COLOR_YELLOW);
+    let mut player = Object::new(25, 23, '@', COLOR_WHITE, "Player".to_string(), true);
+    player.alive = true;
 
     //make a list of Objects
-    let mut objects = [player, npc];
+    let mut objects = vec![player];
 
     //create the game object
     let mut game = Game {
-        map: game::map::make_map(&mut objects[0]),
+        map: game::map::make_map(&mut objects),
     };
 
     compute_fov_map(&mut tcod.fov, &game.map, MAP_WIDTH, MAP_HEIGHT);
@@ -146,7 +142,7 @@ fn main() {
         //clear the off-screen buffer
         tcod.con.clear();
 
-        let fov_recompute = previous_player_position != (objects[0].x, objects[0].y);
+        let fov_recompute = previous_player_position != (objects[PLAYER_INDEX].x, objects[PLAYER_INDEX].y);
         //render our game, and blit to root screen
         render_all(&mut tcod, &mut game, &objects, fov_recompute);
 
@@ -154,13 +150,13 @@ fn main() {
         tcod.root.flush();
 
         //get our player object so we can pass it to handle keys
-        let player = &mut objects[0];
+        let player = &mut objects[PLAYER_INDEX];
 
         //update previous player position
         previous_player_position = (player.x, player.y);
 
         //get the next keyboard input
-        let exit = handle_keys(&mut tcod, &game, player);
+        let exit = handle_keys(&mut tcod, &game, &mut objects);
 
         if exit {
             break;
