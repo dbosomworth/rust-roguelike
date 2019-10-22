@@ -45,12 +45,15 @@ fn render_all(tcod: &mut Tcod, game: &mut Game, objects: &[Object], fov_recomput
     for y in 0..MAP_HEIGHT {
         for x in 0..MAP_WIDTH {
             let wall = game.map[x as usize][y as usize].block_sight;
+            let breakable = game.map[x as usize][y as usize].breakable;
             let visible = tcod.fov.is_in_fov(x, y);
-            let color = match (visible, wall) {
-                (false, false) => COLOR_DARK_GROUND,
-                (false, true) => COLOR_DARK_WALL,
-                (true, false) => COLOR_LIGHT_GROUND,
-                (true, true) => COLOR_LIGHT_WALL,                
+            let color = match (visible, wall, breakable) {
+                (false, false, _) => COLOR_DARK_GROUND,
+                (false, true, false) => COLOR_DARK_WALL,
+                (false, true, true) => COLOR_DARK_BREAKABLE_WALL,
+                (true, false, _) => COLOR_LIGHT_GROUND,
+                (true, true, false) => COLOR_LIGHT_WALL,                
+                (true, true, true) => COLOR_LIGHT_BREAKABLE_WALL,                
             };       
             
             //calculate if tile is explored
@@ -178,11 +181,11 @@ fn main() {
         if objects[PLAYER_INDEX].alive && player_action != PlayerAction::DidntTakeTurn {
             for object in &objects{
                 if (object as *const _) != (&objects[PLAYER_INDEX] as *const _){
-                    println!("The {} growls!", object.name);
+                    //commenting out to reduce spam
+                    //println!("The {} growls!", object.name);
                 }
             }
         }
-
 
         if player_action == PlayerAction::Exit {
             break;

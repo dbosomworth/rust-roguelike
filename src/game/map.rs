@@ -4,6 +4,7 @@ use crate::game::ROOM_MAX_SIZE;
 use crate::game::ROOM_MIN_SIZE;
 use crate::game::MAX_ROOMS;
 use crate::game::PLAYER_INDEX;
+use crate::game::CHANCE_FOR_BREAKABLE_TUNNEL;
 use crate::game::tile::Tile as Tile;    
 use crate::game::object::{Object as Object, place_objects};
 
@@ -57,18 +58,42 @@ fn create_room(room: Rect, map: &mut Map){
 }
 
 
+fn will_be_breakable_tunnel() -> bool{
+    return if rand::random::<f32>() > 1.0 - CHANCE_FOR_BREAKABLE_TUNNEL {
+        true
+    } else {
+        false
+    };
+}
+
 fn create_h_tunnel(x1: i32, x2: i32, y: i32, map: &mut Map){
     use std::cmp;
+
+    let breakable = will_be_breakable_tunnel();
+
     for x in cmp::min(x1, x2)..(cmp::max(x1,x2) + 1) {
+      if breakable == true && map[x as usize][y as usize] != Tile::empty() {
+        map[x as usize][y as usize] = Tile::breakable_wall();
+      }else{
         map[x as usize][y as usize] = Tile::empty();
+      }
     }
 }
+
 fn create_v_tunnel(y1: i32, y2: i32, x: i32, map: &mut Map){
     use std::cmp;
+
+    let breakable = will_be_breakable_tunnel();
+
     for y in cmp::min(y1, y2)..(cmp::max(y1,y2) + 1) {
+       if breakable == true && map[x as usize][y as usize] != Tile::empty(){
+        map[x as usize][y as usize] = Tile::breakable_wall();
+      }else{
         map[x as usize][y as usize] = Tile::empty();
+      }
     }
 }
+
 //generate map
 pub fn make_map(objects: &mut Vec<Object>) -> Map {
     let mut map = vec![vec![Tile::wall(); MAP_HEIGHT as usize]; MAP_WIDTH as usize];

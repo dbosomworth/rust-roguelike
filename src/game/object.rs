@@ -8,6 +8,7 @@ use crate::game::MAX_ROOM_MONSTERS;
 use crate::game::map::Rect;
 use crate::game::map::Map as Map;
 use crate::game::utilities::is_location_blocked;
+use crate::game::tile::Tile;
 
 use rand::Rng;
 
@@ -43,6 +44,7 @@ impl Object {
         }
     }
 
+    
     pub fn player_move_or_attack(dx: i32, dy: i32, game: &Game, objects: &mut [Object]){
         let x = objects[PLAYER_INDEX].x + dx;
         let y = objects[PLAYER_INDEX].y + dy;
@@ -54,10 +56,14 @@ impl Object {
                 println!("The {} laughs at your puny efforts to attack him!", objects[target_id].name);
             }
             None => {
-                Object::move_by(PLAYER_INDEX, dx, dy, &game, objects);
+
+                if game.map[x as usize][y as usize].breakable == true {
+                    println!("You feel a draft coming from the wall.");
+                }else{
+                    Object::move_by(PLAYER_INDEX, dx, dy, &game, objects);
+                }
             }
         }
-
     }
 
     //draw the object to the Console
