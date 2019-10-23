@@ -10,6 +10,9 @@ use crate::game::map::Map as Map;
 use crate::game::utilities::is_location_blocked;
 use crate::game::tile::Tile;
 
+use crate::game::fighter::Fighter;
+use crate::game::ai::Ai;
+
 use rand::Rng;
 
 #[derive(Debug)]
@@ -20,7 +23,9 @@ pub struct Object {
     pub color: Color,
     pub name: String,
     pub blocks: bool,
-    pub alive: bool
+    pub alive: bool,
+    pub fighter: Option<Fighter>,
+    pub ai: Option<Ai>,
 }
 
 impl Object {
@@ -32,7 +37,9 @@ impl Object {
             color: color,
             name: name.into(),
             blocks: blocks,
-            alive: false
+            alive: false,
+            fighter: None,
+            ai: None
         }
     }
 
@@ -44,7 +51,7 @@ impl Object {
         }
     }
 
-    
+    //attempt to move or attack
     pub fn player_move_or_attack(dx: i32, dy: i32, game: &Game, objects: &mut [Object]){
         let x = objects[PLAYER_INDEX].x + dx;
         let y = objects[PLAYER_INDEX].y + dy;
@@ -65,6 +72,30 @@ impl Object {
             }
         }
     }
+
+    //move towards a target    
+    //todo:: fix move_by to use map instead of game
+    pub fn move_towards(id: usize, target_x: i32, target_y: i32, game: &Game, objects: &mut [Object]) {
+        //find the vector
+        let dx = target_x - objects[id].x;
+        let dy = target_y - objects[id].y;
+        let distance = ((dx.pow(2) + dy.pow(2)) as f32).sqrt();
+
+        //normalize, round and restrict to grind
+        let dx = (dx as f32 / distance).round() as i32;
+        let dy = (dy as f32 / distance).round() as i32;
+        
+        Object::move_by(id, dx, dy, &game, objects);
+    }
+
+    //calculates the distance to another object
+    pub fn distance_to(&self, other: &Object) -> f32 {
+        let dx = other.x - self.x;
+        let dy = other.y - self.y;
+
+        return ((dx.pow(2) + dy.pow(2)) as f32).sqrt();
+    }
+
 
     //draw the object to the Console
     pub fn draw(&self, con: &mut dyn Console) {
@@ -93,9 +124,25 @@ pub fn place_objects(room: Rect, map: &Map, objects: &mut Vec<Object>) {
 
         if !is_location_blocked(x, y, map, objects){
             let mut monster = if rand::random::<f32>() < 0.8 {
-                Object::new(x, y, 'o', COLOR_ORC, "orc".to_string(), true)
+                let mut orc = Object::new(x, y, 'o', COLOR_ORC, "orc".to_string(), true);
+                orc.fighter = Some(Fighter{
+                    max_hp: 10,
+                    hp: 10,
+                    defense: 0,
+                    power: 3,
+                });
+                orc.ai = Some(Ai::Basic);
+                orc
             }else{
-                Object::new(x, y, 'T', COLOR_TROLL, "troll".to_string(), true)
+                let mut troll = Object::new(x, y, 'T', COLOR_TROLL, "troll".to_string(), true);
+                troll.fighter = Some(Fighter {
+                    max_hp: 16,
+                    hp: 16,
+                    defense: 1,
+                    power: 4,
+                });
+                troll.ai = Some(Ai::Basic);
+                troll
             };    
         
             monster.alive = true;

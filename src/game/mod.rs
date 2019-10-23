@@ -7,6 +7,7 @@ pub const MAX_ROOM_MONSTERS: i32 = 3;
 pub const CHANCE_FOR_BREAKABLE_TUNNEL: f32 = 0.25;
 
 pub const PLAYER_INDEX: usize = 0;
+pub mod tcod;
 pub mod utilities;
 pub mod map;
 pub mod actions;
@@ -19,3 +20,5 @@ pub mod object;
 pub mod tile;
 pub mod colors;
 pub mod fov;
+pub mod ai;
+pub mod fighter;

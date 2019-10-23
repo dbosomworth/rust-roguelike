@@ -12,6 +12,9 @@ use game::object::Object as Object;
 use game::colors::*;
 use game::fov::*;
 use game::actions::PlayerAction;
+use game::fighter::Fighter;
+use game::tcod::Tcod;
+use game::ai::ai_take_turn;
 
 const SCREEN_WIDTH: i32 = 80;
 const SCREEN_HEIGHT: i32 = 50;
@@ -19,12 +22,7 @@ const LIMIT_FPS: i32 = 30;
 
 const FONT_PNG: &str = "arial10x10.png";
 
-//object to hold/pass around for tcod
-struct Tcod {
-    root: Root,
-    con: Offscreen,
-    fov: FovMap
-}
+
 
 //Render function
 fn render_all(tcod: &mut Tcod, game: &mut Game, objects: &[Object], fov_recompute: bool){
@@ -142,6 +140,12 @@ fn main() {
     //create the player Object
     let mut player = Object::new(25, 23, '@', COLOR_WHITE, "Player".to_string(), true);
     player.alive = true;
+    player.fighter = Some(Fighter {
+        max_hp: 30,
+        hp: 30,
+        defense: 2,
+        power: 5,
+    });
 
     //make a list of Objects
     let mut objects = vec![player];
@@ -179,10 +183,9 @@ fn main() {
 
         //let other objects update
         if objects[PLAYER_INDEX].alive && player_action != PlayerAction::DidntTakeTurn {
-            for object in &objects{
-                if (object as *const _) != (&objects[PLAYER_INDEX] as *const _){
-                    //commenting out to reduce spam
-                    //println!("The {} growls!", object.name);
+            for id in 0..objects.len() {
+                if objects[id].ai.is_some() {
+                    ai_take_turn(id, &tcod, &game, &mut objects);
                 }
             }
         }
