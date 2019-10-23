@@ -22,8 +22,6 @@ const LIMIT_FPS: i32 = 30;
 
 const FONT_PNG: &str = "arial10x10.png";
 
-
-
 //Render function
 fn render_all(tcod: &mut Tcod, game: &mut Game, objects: &[Object], fov_recompute: bool){
     
@@ -65,6 +63,11 @@ fn render_all(tcod: &mut Tcod, game: &mut Game, objects: &[Object], fov_recomput
                 tcod.con.set_char_background(x, y, color, BackgroundFlag::Set);
             }
         }
+    }
+
+    tcod.root.set_default_foreground(COLOR_WHITE);
+    if let Some(fighter) = objects[PLAYER_INDEX].fighter {
+        tcod.root.print_ex(1, SCREEN_HEIGHT - 2, BackgroundFlag::None, TextAlignment::Left, format!("HP: {}/{}", fighter.hp, fighter.max_hp));
     }
 
     //blit the offscreen render to the root
@@ -111,8 +114,6 @@ fn handle_keys(mut tcod: &mut Tcod, game: &Game, objects: &mut [Object]) -> Play
         }
         _ => { return PlayerAction::DidntTakeTurn;}
     }
-
-    return PlayerAction::DidntTakeTurn;
 }
 
 //Main function

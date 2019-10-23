@@ -8,7 +8,7 @@ use crate::game::MAX_ROOM_MONSTERS;
 use crate::game::map::Rect;
 use crate::game::map::Map as Map;
 use crate::game::utilities::is_location_blocked;
-use crate::game::tile::Tile;
+use crate::game::utilities::mut_two;
 
 use crate::game::fighter::Fighter;
 use crate::game::ai::Ai;
@@ -60,7 +60,10 @@ impl Object {
 
         match target_id {
             Some(target_id) => {
-                println!("The {} laughs at your puny efforts to attack him!", objects[target_id].name);
+
+                let (player, target) = mut_two(PLAYER_INDEX, target_id, objects);
+                player.attack(target);
+
             }
             None => {
 
@@ -112,6 +115,26 @@ impl Object {
     pub fn set_pos(&mut self, x: i32, y: i32){
         self.x = x;
         self.y = y;
+    }
+
+    pub fn take_damage(&mut self, damage: i32){
+        if let Some(fighter) = self.fighter.as_mut() {
+            if damage > 0 {
+                fighter.hp -= damage;
+            }
+        }
+    }
+
+    pub fn attack(&mut self, target: &mut Object){
+
+        let damage = self.fighter.map_or(0, |f| f.power) - target.fighter.map_or(0, |f| f.defense);
+
+        if damage > 0 {
+            println!("{} attacks {} for {} hit points!", self.name, target.name, damage);
+            target.take_damage(damage);
+        } else {
+            println!("{} attacks {} but it has no effect!", self.name, target.name);
+        }
     }
 }
 

@@ -1,8 +1,8 @@
 use crate::game::object::Object;
 use crate::game::Game;
 use crate::game::PLAYER_INDEX;
-use crate::game::map::Map as Map;
 use crate::game::tcod::Tcod;
+use crate::game::utilities::mut_two;
 
 #[derive(Debug)]
 pub enum Ai {
@@ -22,9 +22,8 @@ pub fn ai_take_turn(monster_id: usize, tcod: &Tcod, game: &Game, objects: &mut [
 
         }else if objects[PLAYER_INDEX].fighter.map_or(false, |f| f.hp > 0) {
             //attack
-            let monster = &objects[monster_id];
-            println!("The attack of the {} bounces off your shiny metal armor!", monster.name);
-
+            let (monster, player) = mut_two(monster_id, PLAYER_INDEX, objects);
+            monster.attack(player);
         }
     }
 }
