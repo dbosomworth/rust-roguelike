@@ -1,15 +1,24 @@
 use tcod::colors::Color;
 use tcod::console::{Console, BackgroundFlag};
 
-use crate::game::Game;
-use crate::game::PLAYER_INDEX;
-use crate::game::colors::*;
-use crate::game::MAX_ROOM_MONSTERS;
-use crate::game::map::Rect;
-use crate::game::map::Map as Map;
-use crate::game::utilities::is_location_blocked;
-use crate::game::utilities::mut_two;
+//Tring out a differnt style for imports to see how i like it.
+use crate::game::{
+    Game,
+    PLAYER_INDEX,
+    MAX_ROOM_MONSTERS
+};
 
+use crate::game::map::{
+    Rect, 
+    Map as Map
+};
+
+use crate::game::utilities::{
+    is_location_blocked, 
+    mut_two
+};
+
+use crate::game::colors::*;
 use crate::game::fighter::Fighter;
 use crate::game::ai::Ai;
 
