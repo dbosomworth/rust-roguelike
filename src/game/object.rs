@@ -21,7 +21,7 @@ use crate::game::utilities::{
 use crate::game::colors::*;
 use crate::game::fighter::Fighter;
 use crate::game::ai::Ai;
-
+use crate::game::deathcallback::DeathCallback;
 use rand::Rng;
 
 #[derive(Debug)]
@@ -65,7 +65,7 @@ impl Object {
         let x = objects[PLAYER_INDEX].x + dx;
         let y = objects[PLAYER_INDEX].y + dy;
 
-        let target_id = objects.iter().position(|object| object.pos() == (x, y));
+        let target_id = objects.iter().position(|object| object.fighter.is_some() && object.pos() == (x, y));
 
         match target_id {
             Some(target_id) => {
@@ -132,6 +132,13 @@ impl Object {
                 fighter.hp -= damage;
             }
         }
+
+        if let Some(fighter) = self.fighter {
+            if fighter.hp <= 0 {
+                self.alive = false;
+                fighter.on_death.callback(self);
+            }
+        }
     }
 
     pub fn attack(&mut self, target: &mut Object){
@@ -162,6 +169,7 @@ pub fn place_objects(room: Rect, map: &Map, objects: &mut Vec<Object>) {
                     hp: 10,
                     defense: 0,
                     power: 3,
+                    on_death: DeathCallback::Monster,
                 });
                 orc.ai = Some(Ai::Basic);
                 orc
@@ -172,6 +180,7 @@ pub fn place_objects(room: Rect, map: &Map, objects: &mut Vec<Object>) {
                     hp: 16,
                     defense: 1,
                     power: 4,
+                    on_death: DeathCallback::Monster,
                 });
                 troll.ai = Some(Ai::Basic);
                 troll

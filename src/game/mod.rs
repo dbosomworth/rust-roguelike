@@ -22,3 +22,4 @@ pub mod colors;
 pub mod fov;
 pub mod ai;
 pub mod fighter;
+pub mod deathcallback;

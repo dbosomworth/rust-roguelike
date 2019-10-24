@@ -15,6 +15,7 @@ use game::actions::PlayerAction;
 use game::fighter::Fighter;
 use game::tcod::Tcod;
 use game::ai::ai_take_turn;
+use game::deathcallback::DeathCallback;
 
 const SCREEN_WIDTH: i32 = 80;
 const SCREEN_HEIGHT: i32 = 50;
@@ -30,11 +31,18 @@ fn render_all(tcod: &mut Tcod, game: &mut Game, objects: &[Object], fov_recomput
         tcod.fov.compute_fov(player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGORITHM);
     }
 
+    let mut to_draw: Vec<_> = objects
+        .iter()
+        .filter(|o| tcod.fov.is_in_fov(o.x, o.y))
+        .collect();
+    
+    to_draw.sort_by(|o1, o2| {
+        o1.blocks.cmp(&o2.blocks)
+    });
+
     //Draw the objects in our object array
-    for object in objects {
-        if tcod.fov.is_in_fov(object.x, object.y) {
-            object.draw(&mut tcod.con);
-        }
+    for object in &to_draw {
+        object.draw(&mut tcod.con);
     }
 
     //loop through our map and draw the tiles
@@ -146,6 +154,7 @@ fn main() {
         hp: 30,
         defense: 2,
         power: 5,
+        on_death: DeathCallback::Player
     });
 
     //make a list of Objects
